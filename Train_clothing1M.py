@@ -219,7 +219,7 @@ def eval_train(epoch, model):
     model.eval()
     num_samples = args.num_batches * args.batch_size
     losses = torch.zeros(num_samples)
-    targets_total = np.zeros(num_samples)
+    targets_total = np.zeros(num_samples, dtype=int)
     paths = []
     n = 0
     with torch.no_grad():
@@ -318,9 +318,10 @@ for epoch in range(args.num_epochs + 1):
         train(
             epoch, net2, net1, optimizer2, labeled_trainloader, unlabeled_trainloader
         )  # train net2
-
     val_loader = loader.run("val")  # validation
+    print("\nValidation Net1")
     acc1 = val(net1, val_loader, 1)
+    print("\nValidation Net2")
     acc2 = val(net2, val_loader, 2)
     log.write("Validation Epoch:%d      Acc1:%.2f  Acc2:%.2f\n" % (epoch, acc1, acc2))
     log.flush()
