@@ -170,7 +170,7 @@ class clothing_dataloader():
             test_dataset = clothing_dataset(self.root,transform=self.transform_test, mode='test')
             test_loader = DataLoader(
                 dataset=test_dataset, 
-                batch_size=1000,
+                batch_size=self.batch_size,
                 shuffle=False,
                 num_workers=self.num_workers)             
             return test_loader             
@@ -178,7 +178,7 @@ class clothing_dataloader():
             val_dataset = clothing_dataset(self.root,transform=self.transform_test, mode='val')
             val_loader = DataLoader(
                 dataset=val_dataset, 
-                batch_size=1000,
+                batch_size=self.batch_size,
                 shuffle=False,
                 num_workers=self.num_workers)             
             return val_loader     
