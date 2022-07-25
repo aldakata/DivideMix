@@ -17,7 +17,7 @@ def ccgmm_codivide(loss: np.ndarray, targets: np.ndarray) -> np.ndarray:
     for c in range(num_classes):
         mask = targets == c
 
-        gmm = GaussianMixture(n_components=2, max_iter=100, tol=1e-2, reg_covar=5e-4)
+        gmm = GaussianMixture(n_components=2, max_iter=10, tol=1e-2, reg_covar=5e-4)
         gmm.fit(loss[:, 0][mask].reshape(-1, 1))
 
         clean_idx, noisy_idx = gmm.means_.argmin(), gmm.means_.argmax()
@@ -25,4 +25,23 @@ def ccgmm_codivide(loss: np.ndarray, targets: np.ndarray) -> np.ndarray:
         p = gmm.predict_proba(loss[:, 0][mask].reshape(-1, 1))
         prob[mask] = p[:, clean_idx]
 
+    return prob
+
+
+def gmm_codivide(loss: np.ndarray) -> np.ndarray:
+    """
+    To compute the GMM probabilities with a Class-Conditional approach. And to log the means of the resulting GMM.
+    This function also computes the original GMM division and logs the comparison between the two.
+
+    @params:
+    - targets - np.array with the class of every element.
+    """
+    # gmm = GaussianMixture(n_components=2, max_iter=10, reg_covar=5e-4, tol=1e-2)
+    # gmm.fit(losses)
+    # prob = gmm.predict_proba(losses)
+    # prob = prob[:, gmm.means_.argmin()]
+    gmm = GaussianMixture(n_components=2, max_iter=10, tol=1e-2, reg_covar=5e-4)
+    gmm.fit(loss)
+    prob = gmm.predict_proba(loss)
+    prob = prob[:, gmm.means_.argmin()]
     return prob

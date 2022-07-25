@@ -39,6 +39,8 @@ parser.add_argument("--seed", default=123)
 parser.add_argument("--gpuid", default=0, type=int)
 parser.add_argument("--num_class", default=14, type=int)
 parser.add_argument("--num_batches", default=1000, type=int)
+parser.add_argument("--class-conditional", default=False, type=int)
+
 args = parser.parse_args()
 
 torch.cuda.set_device(args.gpuid)
@@ -238,11 +240,11 @@ def eval_train(epoch, model):
 
     losses = (losses - losses.min()) / (losses.max() - losses.min())
     losses = losses.reshape(-1, 1)
-    # gmm = GaussianMixture(n_components=2, max_iter=10, reg_covar=5e-4, tol=1e-2)
-    # gmm.fit(losses)
-    # prob = gmm.predict_proba(losses)
-    # prob = prob[:, gmm.means_.argmin()]
-    prob = ccgmm_codivide(losses, targets_total)
+
+    if args.class_conditional:
+        prob = ccgmm_codivide(losses, targets_total)
+    else:
+        prob = ccgmm_codivide(losses, targets_total)
 
     return prob, paths
 
@@ -260,7 +262,14 @@ def create_model():
     return model
 
 
-checkpoint_name = f"{args.id}_{args.experiment_name}_{args.p_threshold}"
+class_conditional_sufix = "gmm"
+if args.class_conditional:
+    class_conditional_sufix = "ccgmm"
+
+checkpoint_name = (
+    f"{args.id}_{args.experiment_name}_{args.p_threshold}_{class_conditional_sufix}"
+)
+
 log = open("./checkpoint/%s.txt" % checkpoint_name, "w")
 log.flush()
 
