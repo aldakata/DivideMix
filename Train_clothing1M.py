@@ -39,7 +39,7 @@ parser.add_argument("--seed", default=123)
 parser.add_argument("--gpuid", default=0, type=int)
 parser.add_argument("--num_class", default=14, type=int)
 parser.add_argument("--num_batches", default=1000, type=int)
-parser.add_argument("--class-conditional", default=False, type=int)
+parser.add_argument("--class-conditional", default=False, type=bool)
 
 args = parser.parse_args()
 
