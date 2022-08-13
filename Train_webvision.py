@@ -11,6 +11,8 @@ import sys
 import argparse
 import numpy as np
 from InceptionResNetV2 import *
+
+from class_conditional_utils import ccgmm_codivide
 from sklearn.mixture import GaussianMixture
 import dataloader_webvision as dataloader
 import torchnet
@@ -28,6 +30,7 @@ parser.add_argument('--seed', default=123)
 parser.add_argument('--gpuid', default=0, type=int)
 parser.add_argument('--num_class', default=50, type=int)
 parser.add_argument('--data_path', default='./dataset/', type=str, help='path to dataset')
+parser.add_argument("--class-conditional", default=False, type=bool)
 
 args = parser.parse_args()
 
@@ -159,29 +162,36 @@ def test(epoch,net1,net2,test_loader):
 
 def eval_train(model,all_loss):    
     model.eval()
+    num_samples = args.num_batches * args.batch_size
     num_iter = (len(eval_loader.dataset)//eval_loader.batch_size)+1
     losses = torch.zeros(len(eval_loader.dataset))    
+    targets_total = np.zeros(num_samples, dtype=int)
+
     with torch.no_grad():
         for batch_idx, (inputs, targets, index) in enumerate(eval_loader):
             inputs, targets = inputs.cuda(), targets.cuda() 
             outputs = model(inputs) 
             loss = CE(outputs, targets)  
             for b in range(inputs.size(0)):
-                losses[index[b]]=loss[b]       
+                losses[index[b]]=loss[b]    
+                targets_total[index[b]] = targets[b].cpu().numpy().astype("int")
+   
             sys.stdout.write('\r')
             sys.stdout.write('| Evaluating loss Iter[%3d/%3d]\t' %(batch_idx,num_iter)) 
-            sys.stdout.flush()    
-                                    
+            sys.stdout.flush()
+
     losses = (losses-losses.min())/(losses.max()-losses.min())    
     all_loss.append(losses)
 
     # fit a two-component GMM to the loss
     input_loss = losses.reshape(-1,1)
-    gmm = GaussianMixture(n_components=2,max_iter=10,tol=1e-2,reg_covar=5e-4)
-    gmm.fit(input_loss)
-    prob = gmm.predict_proba(input_loss) 
-    prob = prob[:,gmm.means_.argmin()]         
-    return prob,all_loss
+
+    if args.class_conditional:
+        prob = ccgmm_codivide(losses, targets_total)
+    else:
+        prob = ccgmm_codivide(losses, targets_total)
+
+    return prob, all_loss
 
 def linear_rampup(current, warm_up, rampup_length=16):
     current = np.clip((current-warm_up) / rampup_length, 0.0, 1.0)
@@ -206,8 +216,13 @@ def create_model():
     model = model.cuda()
     return model
 
-stats_log=open('./checkpoint/%s'%(args.id)+'_stats.txt','w') 
-test_log=open('./checkpoint/%s'%(args.id)+'_acc.txt','w')     
+class_conditional_sufix = "gmm"
+if args.class_conditional:
+    class_conditional_sufix = "ccgmm"
+
+log_prefix = f'./checkpoint/{args.id}_{class_conditional_sufix}'
+stats_log=open(f'{log_prefix}_stats.txt','w') 
+test_log=open(f'{log_prefix}_acc.txt','w')     
 
 warm_up=1
 
@@ -241,14 +256,13 @@ for epoch in range(args.num_epochs+1):
     web_valloader = loader.run('test')
     imagenet_valloader = loader.run('imagenet')   
     
-    if epoch<warm_up:       
+    if epoch<warm_up:
         warmup_trainloader = loader.run('warmup')
         print('Warmup Net1')
         warmup(epoch,net1,optimizer1,warmup_trainloader)    
         print('\nWarmup Net2')
-        warmup(epoch,net2,optimizer2,warmup_trainloader) 
-   
-    else:                
+        warmup(epoch,net2,optimizer2,warmup_trainloader)
+    else:
         pred1 = (prob1 > args.p_threshold)      
         pred2 = (prob2 > args.p_threshold)      
         
