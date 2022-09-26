@@ -12,6 +12,8 @@ import os
 import argparse
 import numpy as np
 import dataloader_clothing1M as dataloader
+from models.resnet import SupCEResNet
+
 
 from class_conditional_utils import ccgmm_codivide
 from sklearn.mixture import GaussianMixture
@@ -40,6 +42,7 @@ parser.add_argument("--gpuid", default=0, type=int)
 parser.add_argument("--num_class", default=14, type=int)
 parser.add_argument("--num_batches", default=1000, type=int)
 parser.add_argument("--class-conditional", default=False, type=bool)
+parser.add_argument("--method", default="reg", type=str, help="method")
 
 args = parser.parse_args()
 
@@ -255,9 +258,20 @@ class NegEntropy(object):
         return torch.mean(torch.sum(probs.log() * probs, dim=1))
 
 
-def create_model():
+def create_model_reg():
     model = models.resnet50(pretrained=True)
     model.fc = nn.Linear(2048, args.num_class)
+    model = model.cuda()
+    return model
+
+def create_model_selfsup(net="resnet50", num_class=14):
+    chekpoint = torch.load("pretrained/ckpt_clothing_{}.pth".format(net))
+    sd = {}
+    for ke in chekpoint["model"]:
+        nk = ke.replace("module.", "")
+        sd[nk] = chekpoint["model"][ke]
+    model = SupCEResNet(net, num_classes=num_class, pool=True)
+    model.load_state_dict(sd, strict=False)
     model = model.cuda()
     return model
 
@@ -281,6 +295,11 @@ loader = dataloader.clothing_dataloader(
 )
 
 print("| Building net")
+if args.method == "reg":
+    create_model = create_model_reg
+elif args.method == "selfsup":
+    create_model = create_model_selfsup
+
 net1 = create_model()
 net2 = create_model()
 cudnn.benchmark = True
