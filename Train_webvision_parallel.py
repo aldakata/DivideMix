@@ -323,7 +323,7 @@ if __name__ == "__main__":
 
     # conf_penalty = NegEntropy()
     web_valloader = loader.run("test")
-    imagenet_valloader = loader.run("imagenet")
+    # imagenet_valloader = loader.run("imagenet")
 
     for epoch in range(args.num_epochs + 1):
         lr = args.lr
@@ -399,18 +399,18 @@ if __name__ == "__main__":
         p1 = mp.Process(
             target=test, args=(epoch, net1, net2_clone, web_valloader, cuda1, q1)
         )
-        p2 = mp.Process(
-            target=test, args=(epoch, net1_clone, net2, imagenet_valloader, cuda2, q2)
-        )
+        # p2 = mp.Process(
+        #     target=test, args=(epoch, net1_clone, net2, imagenet_valloader, cuda2, q2)
+        # )
 
         p1.start()
-        p2.start()
+        # p2.start()
 
         web_acc = q1.get()
         imagenet_acc = q2.get()
 
         p1.join()
-        p2.join()
+        # p2.join()
 
         print(
             "\n| Test Epoch #%d\t WebVision Acc: %.2f%% (%.2f%%) \t ImageNet Acc: %.2f%% (%.2f%%)\n"
