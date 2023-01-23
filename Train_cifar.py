@@ -14,6 +14,11 @@ from sklearn.mixture import GaussianMixture
 from class_conditional_utils import ccgmm_codivide, gmm_codivide
 import dataloader_cifar as dataloader
 
+from processing_utils import (
+    save_net_optimizer_to_ckpt,
+    load_net_optimizer_from_ckpt_to_device,
+)
+
 parser = argparse.ArgumentParser(description="PyTorch CIFAR Training")
 parser.add_argument("--batch_size", default=64, type=int, help="train batchsize")
 parser.add_argument(
@@ -38,6 +43,7 @@ parser.add_argument(
     "--data_path", default="./cifar-10", type=str, help="path to dataset"
 )
 parser.add_argument("--dataset", default="cifar10", type=str)
+parser.add_argument("--resume", default=0, type=int)
 args = parser.parse_args()
 
 torch.cuda.set_device(args.gpuid)
@@ -338,10 +344,22 @@ print("| Building net")
 net1 = create_model()
 net2 = create_model()
 cudnn.benchmark = True
-
-criterion = SemiLoss()
-optimizer1 = optim.SGD(net1.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-optimizer2 = optim.SGD(net2.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+resume_epoch = 0
+if args.resume == 0:
+    optimizer1 = optim.SGD(
+        net1.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4
+    )
+    optimizer2 = optim.SGD(
+        net2.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4
+    )
+else:
+    resume_epoch = 30
+    net1, optimizer1 = load_net_optimizer_from_ckpt_to_device(
+        net1, args, f"./checkpoint/{args.r}_warmed_up_1.pt", args.device
+    )
+    net2, optimizer2 = load_net_optimizer_from_ckpt_to_device(
+        net2, args, f"./checkpoint/{args.r}_warmed_up_2.pt", args.device
+    )
 
 CE = nn.CrossEntropyLoss(reduction="none")
 CEloss = nn.CrossEntropyLoss()
@@ -350,7 +368,7 @@ if args.noise_mode == "asym":
 
 all_loss = [[], []]  # save the history of losses from two networks
 
-for epoch in range(args.num_epochs + 1):
+for epoch in range(resume_epoch, args.num_epochs + 1):
     lr = args.lr
     if epoch >= 150:
         lr /= 10
@@ -392,3 +410,10 @@ for epoch in range(args.num_epochs + 1):
         )  # train net2
 
     test(epoch, net1, net2)
+    if epoch + 1 == warm_up and args.resume == 0:
+        save_net_optimizer_to_ckpt(
+            net1, optimizer1, f"./checkpoint/{args.r}_warmed_up_1.pt"
+        )
+        save_net_optimizer_to_ckpt(
+            net2, optimizer2, f"./checkpoint/{args.r}_warmed_up_2.pt"
+        )
