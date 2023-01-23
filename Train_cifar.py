@@ -206,6 +206,8 @@ def test(epoch, net1, net2):
     net2.eval()
     correct = 0
     total = 0
+    per_class_accuracy = np.zeros(args.num_class)
+
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(test_loader):
             inputs, targets = inputs.cuda(), targets.cuda()
@@ -213,23 +215,33 @@ def test(epoch, net1, net2):
             outputs2 = net2(inputs)
             outputs = outputs1 + outputs2
             _, predicted = torch.max(outputs, 1)
+            for c in set(predicted.cpu().numpy()):
+                per_class_accuracy[c] += sum(predicted[targets == c] == c)
 
             total += targets.size(0)
             correct += predicted.eq(targets).cpu().sum().item()
     acc = 100.0 * correct / total
-    print("\n| Test Epoch #%d\t Accuracy: %.2f%%\n" % (epoch, acc))
-    test_log.write("Epoch:%d   Accuracy:%.2f\n" % (epoch, acc))
+    per_class_accuracy /= total / args.num_class
+    std = per_class_accuracy.std()
+    print("\n| Test Epoch #%d\t Accuracy: %.2f%%\t STD:%.2f%%\n" % (epoch, acc, std))
+    test_log.write("Epoch:%d   Accuracy:%.2f\t STD:%.2f\n" % (epoch, acc, std))
     test_log.flush()
 
 
 def eval_train(model, all_loss):
     model.eval()
     losses = torch.zeros(50000)
+    per_class_accuracy = np.zeros(args.num_class)
+
     with torch.no_grad():
         for batch_idx, (inputs, targets, index) in enumerate(eval_loader):
             inputs, targets = inputs.cuda(), targets.cuda()
             outputs = model(inputs)
             loss = CE(outputs, targets)
+            _, predicted = torch.max(outputs, 1)
+            for c in set(predicted.cpu().numpy()):
+                per_class_accuracy[c] += sum(predicted[targets == c] == c)
+
             for b in range(inputs.size(0)):
                 losses[index[b]] = loss[b]
     losses = (losses - losses.min()) / (losses.max() - losses.min())
@@ -253,6 +265,13 @@ def eval_train(model, all_loss):
     prob = ccgmm_codivide(input_loss)
 
     prob = gmm_codivide(input_loss)
+
+    per_class_accuracy /= 50000 / args.num_class
+    std = per_class_accuracy.std()
+    acc = per_class_accuracy.mean()
+    print("\n| Test Epoch #%d\t Accuracy: %.2f%%\t STD:%.2f%%\n" % (epoch, acc, std))
+    train_log.write("Epoch:%d   Accuracy:%.2f\t STD:%.2f\n" % (epoch, acc, std))
+    train_log.flush()
 
     return prob, all_loss
 
@@ -290,6 +309,12 @@ stats_log = open(
 )
 test_log = open(
     "./checkpoint/%s_%.1f_%s" % (args.dataset, args.r, args.noise_mode) + "_acc.txt",
+    "w",
+)
+
+train_log = open(
+    "./checkpoint/%s_%.1f_%s" % (args.dataset, args.r, args.noise_mode)
+    + "_train_acc.txt",
     "w",
 )
 
