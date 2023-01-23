@@ -310,16 +310,21 @@ def create_model():
 
 
 stats_log = open(
-    "./checkpoint/%s_%.1f_%s" % (args.dataset, args.r, args.noise_mode) + "_stats.txt",
+    "./checkpoint/%s_%.1f_%s_%.2f"
+    % (args.dataset, args.r, args.noise_mode, args.p_threshold)
+    + "_stats.txt",
     "w",
 )
 test_log = open(
-    "./checkpoint/%s_%.1f_%s" % (args.dataset, args.r, args.noise_mode) + "_acc.txt",
+    "./checkpoint/%s_%.1f_%s%.2f"
+    % (args.dataset, args.r, args.noise_mode, args.p_threshold)
+    + "_acc.txt",
     "w",
 )
 
 train_log = open(
-    "./checkpoint/%s_%.1f_%s" % (args.dataset, args.r, args.noise_mode)
+    "./checkpoint/%s_%.1f_%s%.2f"
+    % (args.dataset, args.r, args.noise_mode, args.p_threshold)
     + "_train_acc.txt",
     "w",
 )
