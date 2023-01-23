@@ -51,7 +51,7 @@ random.seed(args.seed)
 torch.manual_seed(args.seed)
 torch.cuda.manual_seed_all(args.seed)
 
-
+device = "cuda:0"
 # Training
 def train(epoch, net, net2, optimizer, labeled_trainloader, unlabeled_trainloader):
     net.train()
@@ -238,6 +238,7 @@ def eval_train(model, all_loss):
     model.eval()
     losses = torch.zeros(50000)
     per_class_accuracy = np.zeros(args.num_class)
+    targets_all = torch.zeros(50000, device=device)
 
     with torch.no_grad():
         for batch_idx, (inputs, targets, index) in enumerate(eval_loader):
@@ -247,9 +248,11 @@ def eval_train(model, all_loss):
             _, predicted = torch.max(outputs, 1)
             for c in set(predicted.cpu().numpy()):
                 per_class_accuracy[c] += sum(predicted[targets == c] == c)
-
             for b in range(inputs.size(0)):
                 losses[index[b]] = loss[b]
+                targets_all[index[b]] = targets[b]
+
+    targets_all = targets_all.cpu().numpy().astype("int")
     losses = (losses - losses.min()) / (losses.max() - losses.min())
     all_loss.append(losses)
 
@@ -268,9 +271,7 @@ def eval_train(model, all_loss):
     # prob = gmm.predict_proba(input_loss)
     # prob = prob[:, gmm.means_.argmin()]
 
-    prob = ccgmm_codivide(input_loss)
-
-    prob = gmm_codivide(input_loss)
+    prob = ccgmm_codivide(input_loss, targets_all)
 
     per_class_accuracy /= 50000 / args.num_class
     std = per_class_accuracy.std()
