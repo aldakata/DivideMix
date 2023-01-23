@@ -361,10 +361,10 @@ if args.resume == 0:
 else:
     resume_epoch = 30
     net1, optimizer1 = load_net_optimizer_from_ckpt_to_device(
-        net1, args, f"./checkpoint/{args.r}_warmed_up_1.pt", args.device
+        net1, args, f"./checkpoint/{args.r}_warmed_up_1.pt", device
     )
     net2, optimizer2 = load_net_optimizer_from_ckpt_to_device(
-        net2, args, f"./checkpoint/{args.r}_warmed_up_2.pt", args.device
+        net2, args, f"./checkpoint/{args.r}_warmed_up_2.pt", device
     )
 
 CE = nn.CrossEntropyLoss(reduction="none")
