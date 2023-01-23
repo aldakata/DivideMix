@@ -351,6 +351,7 @@ net1 = create_model()
 net2 = create_model()
 cudnn.benchmark = True
 resume_epoch = 0
+criterion = SemiLoss()
 if args.resume == 0:
     optimizer1 = optim.SGD(
         net1.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4
