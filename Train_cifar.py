@@ -313,23 +313,23 @@ def create_model():
     return model
 
 
+cc_sufix = "reg"
+if args.cc:
+    cc_sufix = "cc"
+
+log_name = "{args.dataset}_{args.r}_{args.noise_mode}_{args.p_threshold}_{cc_sufix}"
+
 stats_log = open(
-    "./checkpoint/%s_%.1f_%s_%.2f"
-    % (args.dataset, args.r, args.noise_mode, args.p_threshold)
-    + "_stats.txt",
+    f"./checkpoint/{log_name}_stats.txt",
     "w",
 )
 test_log = open(
-    "./checkpoint/%s_%.1f_%s%.2f"
-    % (args.dataset, args.r, args.noise_mode, args.p_threshold)
-    + "_acc.txt",
+    f"./checkpoint/{log_name}_acc.txt",
     "w",
 )
 
 train_log = open(
-    "./checkpoint/%s_%.1f_%s%.2f"
-    % (args.dataset, args.r, args.noise_mode, args.p_threshold)
-    + "_train_acc.txt",
+    f"./checkpoint/{log_name}_train_acc.txt",
     "w",
 )
 
