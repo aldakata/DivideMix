@@ -317,7 +317,7 @@ cc_sufix = "reg"
 if args.cc:
     cc_sufix = "cc"
 
-log_name = "{args.dataset}_{args.r}_{args.noise_mode}_{args.p_threshold}_{cc_sufix}"
+log_name = f"{args.dataset}_{args.r}_{args.noise_mode}_{args.p_threshold}_{cc_sufix}"
 
 stats_log = open(
     f"./checkpoint/{log_name}_stats.txt",
