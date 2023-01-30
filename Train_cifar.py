@@ -44,6 +44,8 @@ parser.add_argument(
 )
 parser.add_argument("--dataset", default="cifar10", type=str)
 parser.add_argument("--resume", default=0, type=int)
+
+parser.add_argument("--cc", default=False, type=bool)
 args = parser.parse_args()
 
 torch.cuda.set_device(args.gpuid)
@@ -266,17 +268,18 @@ def eval_train(model, all_loss):
         input_loss = losses.reshape(-1, 1)
 
     # fit a two-component GMM to the loss
-    # gmm = GaussianMixture(n_components=2, max_iter=10, tol=1e-2, reg_covar=5e-4)
-    # gmm.fit(input_loss)
-    # prob = gmm.predict_proba(input_loss)
-    # prob = prob[:, gmm.means_.argmin()]
-
-    prob = ccgmm_codivide(input_loss, targets_all)
+    if args.cc:
+        prob = ccgmm_codivide(input_loss, targets_all)
+    else:
+        gmm = GaussianMixture(n_components=2, max_iter=10, tol=1e-2, reg_covar=5e-4)
+        gmm.fit(input_loss)
+        prob = gmm.predict_proba(input_loss)
+        prob = prob[:, gmm.means_.argmin()]
 
     per_class_accuracy /= 50000 / args.num_class
     std = per_class_accuracy.std()
     acc = per_class_accuracy.mean()
-    print("\n| Test Epoch #%d\t Accuracy: %.2f%%\t STD:%.2f%%\n" % (epoch, acc, std))
+    print("\n| Eval Epoch #%d\t Accuracy: %.2f%%\t STD:%.2f%%\n" % (epoch, acc, std))
     train_log.write("Epoch:%d   Accuracy:%.2f\t STD:%.2f\n" % (epoch, acc, std))
     train_log.flush()
 
@@ -360,6 +363,7 @@ if args.resume == 0:
         net2.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4
     )
 else:
+    print("Loading net")
     resume_epoch = 30
     net1, optimizer1 = load_net_optimizer_from_ckpt_to_device(
         net1, args, f"./checkpoint/{args.r}_warmed_up_1.pt", device
