@@ -308,7 +308,9 @@ def eval_train(model, all_loss):
     per_class_accuracy *= 100
     std = per_class_accuracy.std()
     acc = per_class_accuracy.mean()
-    print("\n| Eval Epoch #%d\t Accuracy: %.2f%%\t STD:%.2f%%\n" % (epoch, acc, std))
+    print(
+        f"Epoch:{epoch:d}   Accuracy:{acc:.2f}\t STD:{std:.2f} GMM_acc:{acc_gmm} CC_acc:{acc_cc}\n"
+    )
     train_log.write(
         f"Epoch:{epoch:d}   Accuracy:{acc:.2f}\t STD:{std:.2f} GMM_acc:{acc_gmm} CC_acc:{acc_cc}\n"
     )
