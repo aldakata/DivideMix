@@ -48,6 +48,10 @@ parser.add_argument("--resume", default=0, type=int)
 parser.add_argument("--cc", default=False, dest="cc", action="store_true")
 parser.set_defaults(cc=False)
 
+parser.add_argument(
+    "--skip-warmup", default=False, dest="skip_warmup", action="store_true"
+)
+parser.set_defaults(skip_warmup=False)
 args = parser.parse_args()
 
 torch.cuda.set_device(args.gpuid)
@@ -417,7 +421,7 @@ for epoch in range(resume_epoch, args.num_epochs + 1):
     test_loader = loader.run("test")
     eval_loader = loader.run("eval_train")
 
-    if epoch < warm_up:
+    if epoch < warm_up and not args.skip_warmup:
         warmup_trainloader = loader.run("warmup")
         print("Warmup Net1")
         warmup(epoch, net1, optimizer1, warmup_trainloader)
