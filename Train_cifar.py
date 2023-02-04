@@ -241,21 +241,34 @@ def eval_train(model, all_loss):
     losses = torch.zeros(50000)
     per_class_accuracy = np.zeros(args.num_class)
     targets_all = torch.zeros(50000, device=device)
+    targets_clean_all = torch.zeros(50000, device=device)
 
     with torch.no_grad():
-        for batch_idx, (inputs, targets, index) in enumerate(eval_loader):
-            inputs, targets = inputs.cuda(), targets.cuda()
+        for batch_idx, (inputs, targets, clean_targets, index) in enumerate(
+            eval_loader
+        ):
+            inputs, targets, clean_targets = (
+                inputs.cuda(),
+                targets.cuda(),
+                clean_targets.cuda(),
+            )
             outputs = model(inputs)
             loss = CE(outputs, targets)
             _, predicted = torch.max(outputs, 1)
             for c in set(predicted.cpu().numpy()):
-                per_class_accuracy[c] += sum(predicted[targets == c] == c)
+                per_class_accuracy[c] += sum(predicted[clean_targets == c] == c)
             for b in range(inputs.size(0)):
                 losses[index[b]] = loss[b]
                 targets_all[index[b]] = targets[b]
+                targets_clean_all[index[b]] = clean_targets[b]
 
     targets_all = targets_all.cpu().numpy().astype("int")
+    targets_clean_all = targets_clean_all.cpu().numpy().astype("int")
+
     losses = (losses - losses.min()) / (losses.max() - losses.min())
+
+    clean_labels = targets_all == targets_clean_all
+
     all_loss.append(losses)
 
     if (
@@ -267,20 +280,32 @@ def eval_train(model, all_loss):
     else:
         input_loss = losses.reshape(-1, 1)
 
+    prob_gmm = gmm_codivide(input_loss)
+    p_thr = np.clip(args.p_threshold, prob_gmm.min() + 1e-5, prob_gmm.max() - 1e-5)
+    pred_gmm = prob_gmm > p_thr
+    acc_gmm = 100 * np.sum(pred_gmm == clean_labels) / len(pred_gmm)
+    print(f"Accuracy:{acc_gmm:.2f}\n")
+
+    prob_cc = ccgmm_codivide(input_loss, targets_all)
+    p_thr = np.clip(args.p_threshold, prob_cc.min() + 1e-5, prob_cc.max() - 1e-5)
+    pred_cc = prob_cc > p_thr
+    acc_cc = 100 * np.sum(pred_cc == clean_labels) / len(pred_cc)
+    print("Accuracy:%.2f\n" % (acc_cc))
+
     # fit a two-component GMM to the loss
     if args.cc:
-        prob = ccgmm_codivide(input_loss, targets_all)
+        prob = prob_cc
     else:
-        gmm = GaussianMixture(n_components=2, max_iter=10, tol=1e-2, reg_covar=5e-4)
-        gmm.fit(input_loss)
-        prob = gmm.predict_proba(input_loss)
-        prob = prob[:, gmm.means_.argmin()]
+        prob = prob_gmm
 
     per_class_accuracy /= 50000 / args.num_class
+    per_class_accuracy *= 100
     std = per_class_accuracy.std()
     acc = per_class_accuracy.mean()
     print("\n| Eval Epoch #%d\t Accuracy: %.2f%%\t STD:%.2f%%\n" % (epoch, acc, std))
-    train_log.write("Epoch:%d   Accuracy:%.2f\t STD:%.2f\n" % (epoch, acc, std))
+    train_log.write(
+        f"Epoch:{epoch:d}   Accuracy:{acc:.2f}\t STD:{std:.2f} GMM_acc:{acc_gmm} CC_acc:{acc_cc}\n"
+    )
     train_log.flush()
 
     return prob, all_loss
