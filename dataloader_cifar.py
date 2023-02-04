@@ -155,7 +155,7 @@ class cifar_dataset(Dataset):
             img = Image.fromarray(img)
             img = self.transform(img)
             return img, target
-        elif self.mode == "eval":
+        elif self.mode == "eval_train":
             img, target, clean_target = (
                 self.train_data[index],
                 self.noise_label[index],
