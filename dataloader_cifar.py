@@ -102,7 +102,7 @@ class cifar_dataset(Dataset):
                 print("save noisy labels to %s ..." % noise_file)
                 json.dump(noise_label, open(noise_file, "w"))
 
-            if self.mode in ["all", "eval"]:
+            if self.mode in ["all", "eval_train"]:
                 self.train_data = train_data
                 self.noise_label = noise_label
                 self.clean_label = train_label
