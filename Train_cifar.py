@@ -45,7 +45,9 @@ parser.add_argument(
 parser.add_argument("--dataset", default="cifar10", type=str)
 parser.add_argument("--resume", default=0, type=int)
 
-parser.add_argument("--cc", default=False, type=bool)
+parser.add_argument("--cc", default=False, type=bool, action="store_true")
+parser.set_defaults(cc=False)
+
 args = parser.parse_args()
 
 torch.cuda.set_device(args.gpuid)
