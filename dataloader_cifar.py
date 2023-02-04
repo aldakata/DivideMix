@@ -308,7 +308,7 @@ class cifar_dataloader:
                 r=self.r,
                 root_dir=self.root_dir,
                 transform=self.transform_test,
-                mode="all",
+                mode="eval_train",
                 noise_file=self.noise_file,
             )
             eval_loader = DataLoader(
