@@ -15,7 +15,7 @@ import dataloader_clothing1M as dataloader
 from models.resnet import SupCEResNet
 
 
-from class_conditional_utils import ccgmm_codivide
+from class_conditional_utils import ccgmm_codivide, gmm_codivide
 from sklearn.mixture import GaussianMixture
 
 parser = argparse.ArgumentParser(description="PyTorch Clothing1M Training")
@@ -41,7 +41,11 @@ parser.add_argument("--seed", default=123)
 parser.add_argument("--gpuid", default=0, type=int)
 parser.add_argument("--num_class", default=14, type=int)
 parser.add_argument("--num_batches", default=1000, type=int)
-parser.add_argument("--class-conditional", default=False, type=bool)
+parser.add_argument(
+    "--class-conditional", default=False, dest="class_conditional", action="store_true"
+)
+parser.set_defaults(class_conditionsl=False)
+
 parser.add_argument("--method", default="reg", type=str, help="method")
 
 args = parser.parse_args()
@@ -247,7 +251,7 @@ def eval_train(epoch, model):
     if args.class_conditional:
         prob = ccgmm_codivide(losses, targets_total)
     else:
-        prob = ccgmm_codivide(losses, targets_total)
+        prob = gmm_codivide(losses, targets_total)
 
     return prob, paths
 
@@ -263,6 +267,7 @@ def create_model_reg():
     model.fc = nn.Linear(2048, args.num_class)
     model = model.cuda()
     return model
+
 
 def create_model_selfsup(net="resnet50", num_class=14):
     chekpoint = torch.load("pretrained/ckpt_clothing_{}.pth".format(net))
