@@ -17,6 +17,90 @@ def unpickle(file):
     return dict
 
 
+def get_asym_cifar100(root_dir):
+    super_class = {}
+    super_class["aquatic mammals"] = ["beaver", "dolphin", "otter", "seal", "whale"]
+    super_class["fish"] = ["aquarium fish", "flatfish", "ray", "shark", "trout"]
+    super_class["flowers"] = ["orchid", "poppy", "rose", "sunflower", "tulip"]
+    super_class["food containers"] = ["bottle", "bowl", "can", "cup", "plate"]
+    super_class["fruit and vegetables"] = [
+        "apple",
+        "mushroom",
+        "orange",
+        "pear",
+        "sweet pepper",
+    ]
+    super_class["household electrical devices"] = [
+        "clock",
+        "keyboard",
+        "lamp",
+        "telephone",
+        "television",
+    ]
+    super_class["household furniture"] = ["bed", "chair", "couch", "table", "wardrobe"]
+    super_class["insects"] = ["bee", "beetle", "butterfly", "caterpillar", "cockroach"]
+    super_class["large carnivores"] = ["bear", "leopard", "lion", "tiger", "wolf"]
+    super_class["large man-made outdoor things"] = [
+        "bridge",
+        "castle",
+        "house",
+        "road",
+        "skyscraper",
+    ]
+    super_class["large natural outdoor scenes"] = [
+        "cloud",
+        "forest",
+        "mountain",
+        "plain",
+        "sea",
+    ]
+    super_class["large omnivores and herbivores"] = [
+        "camel",
+        "cattle",
+        "chimpanzee",
+        "elephant",
+        "kangaroo",
+    ]
+    super_class["medium mammals"] = ["fox", "porcupine", "possum", "raccoon", "skunk"]
+    super_class["non-insect invertebrates"] = [
+        "crab",
+        "lobster",
+        "snail",
+        "spider",
+        "worm",
+    ]
+    super_class["people"] = ["baby", "boy", "girl", "man", "woman"]
+    super_class["reptiles"] = ["crocodile", "dinosaur", "lizard", "snake", "turtle"]
+    super_class["small mammals"] = ["hamster", "mouse", "rabbit", "shrew", "squirrel"]
+    super_class["trees"] = [
+        "maple tree",
+        "oak tree",
+        "palm tree",
+        "pine tree",
+        "willow tree",
+    ]
+    super_class["vehicles 1"] = [
+        "bicycle",
+        "bus",
+        "motorcycle",
+        "pickup truck",
+        "train",
+    ]
+    super_class["vehicles 2"] = ["lawn mower", "rocket", "streetcar", "tank", "tractor"]
+
+    classes_to_mix = [[] for _ in range(20)]
+    with open("{}/meta".format(root_dir), "rb") as f:
+        entry = pickle.load(f, encoding="latin1")
+        for j, fine in enumerate(entry["fine_label_names"]):
+            fine = fine.replace("_", " ")
+            for i, coarse in enumerate(entry["coarse_label_names"]):
+                coarse = coarse.replace("_", " ")
+                if fine in super_class[coarse]:
+                    classes_to_mix[i].append(j)
+
+    return classes_to_mix
+
+
 class cifar_dataset(Dataset):
     def __init__(
         self,
@@ -35,18 +119,21 @@ class cifar_dataset(Dataset):
         self.r = r  # noise ratio
         self.transform = transform
         self.mode = mode
-        self.transition = {
-            0: 0,
-            2: 0,
-            4: 7,
-            7: 7,
-            1: 1,
-            9: 1,
-            3: 5,
-            5: 3,
-            6: 6,
-            8: 8,
-        }  # class transition for asymmetric noise
+        if dataset == "cifar10":
+            self.transition = {
+                0: 0,
+                2: 0,
+                4: 7,
+                7: 7,
+                1: 1,
+                9: 1,
+                3: 5,
+                5: 3,
+                6: 6,
+                8: 8,
+            }
+        elif dataset == "cifar100":
+            self.transition = get_asym_cifar100(root_dir)
 
         if self.mode == "test":
             if dataset == "cifar10":
