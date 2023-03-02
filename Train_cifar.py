@@ -49,6 +49,12 @@ parser.add_argument("--cc", default=False, dest="cc", action="store_true")
 parser.set_defaults(cc=False)
 
 parser.add_argument(
+    "--codivide-log", default=False, dest="codivide_log", action="store_true"
+)
+parser.set_defaults(codivide_log=False)
+
+
+parser.add_argument(
     "--skip-warmup", default=False, dest="skip_warmup", action="store_true"
 )
 parser.set_defaults(skip_warmup=False)
@@ -289,13 +295,43 @@ def eval_train(model, all_loss):
     prob_gmm = gmm_codivide(input_loss)
     p_thr = np.clip(args.p_threshold, prob_gmm.min() + 1e-5, prob_gmm.max() - 1e-5)
     pred_gmm = prob_gmm > p_thr
+    gmm_GT_log = []
+    gmm_GL_log = []
+    for c in set(targets_all):
+        mask = targets_clean_all == c
+        c_acc = (
+            100 * np.sum(pred_gmm[mask] == clean_labels[mask]) / len(pred_gmm[[mask]])
+        )
+        gmm_GT_log.append(c_acc)
+
+        mask = targets_all == c
+        c_acc = (
+            100 * np.sum(pred_gmm[mask] == clean_labels[mask]) / len(pred_gmm[[mask]])
+        )
+        gmm_GL_log.append(c_acc)
+
     acc_gmm = 100 * np.sum(pred_gmm == clean_labels) / len(pred_gmm)
+    gmm_GT_std = np.std(gmm_GT_log)
+    gmm_GL_std = np.std(gmm_GL_log)
     print(f"Accuracy:{acc_gmm:.2f}\n")
 
     prob_cc = ccgmm_codivide(input_loss, targets_all)
     p_thr = np.clip(args.p_threshold, prob_cc.min() + 1e-5, prob_cc.max() - 1e-5)
     pred_cc = prob_cc > p_thr
+    cc_GT_log = []
+    cc_GL_log = []
+    for c in set(targets_all):
+        mask = targets_clean_all == c
+        c_acc = 100 * np.sum(pred_cc[mask] == clean_labels[mask]) / len(pred_cc[[mask]])
+        cc_GT_log.append(c_acc)
+
+        mask = targets_all == c
+        c_acc = 100 * np.sum(pred_cc[mask] == clean_labels[mask]) / len(pred_cc[[mask]])
+        cc_GL_log.append(c_acc)
+
     acc_cc = 100 * np.sum(pred_cc == clean_labels) / len(pred_cc)
+    cc_GT_std = np.std(cc_GT_log)
+    cc_GL_std = np.std(cc_GL_log)
     print("Accuracy:%.2f\n" % (acc_cc))
 
     # fit a two-component GMM to the loss
@@ -309,10 +345,10 @@ def eval_train(model, all_loss):
     std = per_class_accuracy.std()
     acc = per_class_accuracy.mean()
     print(
-        f"Epoch:{epoch:d}   Accuracy:{acc:.2f}\t STD:{std:.2f} GMM_acc:{acc_gmm} CC_acc:{acc_cc}\n"
+        f"Epoch:{epoch:d},Accuracy:{acc:.2f},STD:{std:.2f},GMM_acc:{acc_gmm},GMM_std_label_groups:{gmm_GL_std},GMM_std_GTlabels:{gmm_GT_std},CC_acc:{acc_cc},CC_std_label_groups:{cc_GL_std},CC_std_GT_labels:{cc_GT_std}\n"
     )
     train_log.write(
-        f"Epoch:{epoch:d}   Accuracy:{acc:.2f}\t STD:{std:.2f} GMM_acc:{acc_gmm} CC_acc:{acc_cc}\n"
+        f"Epoch:{epoch:d},Accuracy:{acc:.2f},STD:{std:.2f},GMM_acc:{acc_gmm},GMM_std_label_groups:{gmm_GL_std},GMM_std_GTlabels:{gmm_GT_std},CC_acc:{acc_cc},CC_std_label_groups:{cc_GL_std},CC_std_GT_labels:{cc_GT_std}\n"
     )
     train_log.flush()
 
