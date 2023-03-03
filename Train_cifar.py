@@ -493,7 +493,7 @@ for epoch in range(resume_epoch, args.num_epochs + 1):
 
     this_acc = test(epoch, net1, net2)
     if this_acc > best_acc:
-        best_acc = this
+        best_acc = this_acc
         save_net_optimizer_to_ckpt(
             net1, optimizer1, f"./checkpoint/{args.r}_{args.p_threshold}_best_up_1.pt"
         )
