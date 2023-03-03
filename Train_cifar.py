@@ -1,5 +1,6 @@
 from __future__ import print_function
 import sys
+import this
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -447,7 +448,7 @@ if args.noise_mode == "asym":
     conf_penalty = NegEntropy()
 
 all_loss = [[], []]  # save the history of losses from two networks
-
+best_acc = 0
 for epoch in range(resume_epoch, args.num_epochs + 1):
     lr = args.lr
     if epoch >= 150:
@@ -489,11 +490,12 @@ for epoch in range(resume_epoch, args.num_epochs + 1):
             epoch, net2, net1, optimizer2, labeled_trainloader, unlabeled_trainloader
         )  # train net2
 
-    test(epoch, net1, net2)
-    if epoch + 1 == warm_up and args.resume == 0:
+    this_acc = test(epoch, net1, net2)
+    if this_acc > best_acc:
+        best_acc = this
         save_net_optimizer_to_ckpt(
-            net1, optimizer1, f"./checkpoint/{args.r}_warmed_up_1.pt"
+            net1, optimizer1, f"./checkpoint/{args.r}_{args.p_threshold}_best_up_1.pt"
         )
         save_net_optimizer_to_ckpt(
-            net2, optimizer2, f"./checkpoint/{args.r}_warmed_up_2.pt"
+            net2, optimizer2, f"./checkpoint/{args.r}_{args.p_threshold}_best_up_2.pt"
         )
