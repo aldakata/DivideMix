@@ -14,6 +14,7 @@ from PreResNet import *
 from sklearn.mixture import GaussianMixture
 from class_conditional_utils import ccgmm_codivide, gmm_codivide
 import dataloader_cifar as dataloader
+from sklearn.metrics import confusion_matrix
 
 from processing_utils import (
     save_net_optimizer_to_ckpt,
@@ -59,6 +60,10 @@ parser.add_argument(
     "--skip-warmup", default=False, dest="skip_warmup", action="store_true"
 )
 parser.set_defaults(skip_warmup=False)
+
+parser.add_argument("--confusion", default=False, dest="confusion", action="store_true")
+parser.set_defaults(confusion=False)
+
 args = parser.parse_args()
 
 torch.cuda.set_device(args.gpuid)
@@ -228,7 +233,8 @@ def test(epoch, net1, net2):
     correct = 0
     total = 0
     per_class_accuracy = np.zeros(args.num_class)
-
+    total_predicted = torch.zeros(10000, device=device)
+    total_GT = torch.zeros(10000, device=device)
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(test_loader):
             inputs, targets = inputs.cuda(), targets.cuda()
@@ -238,14 +244,22 @@ def test(epoch, net1, net2):
             _, predicted = torch.max(outputs, 1)
             for c in set(predicted.cpu().numpy()):
                 per_class_accuracy[c] += sum(predicted[targets == c] == c)
-
+            for i, e in predicted:
+                pos = batch_idx * len(predicted)
+                total_predicted[pos + i] = e
+                total_GT[pos + i] = targets[i]
             total += targets.size(0)
             correct += predicted.eq(targets).cpu().sum().item()
+    total_predicted = total_predicted.cpu().detach().numpy()
+    total_GT = total_GT.cpu().detach().numpy()
+    cm = confusion_matrix(total_GT, total_predicted)
+
     acc = 100.0 * correct / total
     per_class_accuracy /= total / args.num_class
     std = per_class_accuracy.std()
     print("\n| Test Epoch #%d\t Accuracy: %.2f%%\t STD:%.2f%%\n" % (epoch, acc, std))
-    test_log.write("Epoch:%d   Accuracy:%.2f\t STD:%.2f\n" % (epoch, acc, std))
+    # test_log.write("Epoch:%d   Accuracy:%.2f\t STD:%.2f\n" % (epoch, acc, std))
+    test_log.write(f"{cm}")
     test_log.flush()
     return acc
 
@@ -426,6 +440,23 @@ net2 = create_model()
 cudnn.benchmark = True
 resume_epoch = 0
 criterion = SemiLoss()
+CE = nn.CrossEntropyLoss(reduction="none")
+CEloss = nn.CrossEntropyLoss()
+if args.noise_mode == "asym":
+    conf_penalty = NegEntropy()
+
+if args.confusion:
+    print("WARNING CONFUSION!\nLoading net")
+    net1, optimizer1 = load_net_optimizer_from_ckpt_to_device(
+        net1, args, f"./checkpoint/0.4_0.5_best_up_1.pt", device
+    )
+    net2, optimizer2 = load_net_optimizer_from_ckpt_to_device(
+        net2, args, f"./checkpoint/0.4_0.5_best_up_2.pt", device
+    )
+    test_loader = loader.run("test")
+    this_acc = test(0, net1, net2)
+
+
 if args.resume == 0:
     optimizer1 = optim.SGD(
         net1.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4
@@ -443,10 +474,6 @@ else:
         net2, args, f"./checkpoint/{args.r}_warmed_up_2.pt", device
     )
 
-CE = nn.CrossEntropyLoss(reduction="none")
-CEloss = nn.CrossEntropyLoss()
-if args.noise_mode == "asym":
-    conf_penalty = NegEntropy()
 
 all_loss = [[], []]  # save the history of losses from two networks
 best_acc = 0
