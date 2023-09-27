@@ -166,12 +166,10 @@ class cifar_dataset(Dataset):
             train_data = train_data.transpose((0, 2, 3, 1))
 
             if os.path.exists(noise_file):
-                print("inside noise_file")
                 # noise_label = json.load(open(noise_file, "r"))
-                noise_file = np.load(noise_file, allow_pickle=True)
-                train_label = noise_file.item().get("clean_label")
-                noise_label = noise_file.item().get("noise_label")
-                print(f"noise labels {noise_label}")
+                nf = torch.load(noise_file)
+                train_label = nf["clean_label"]
+                noise_label = nf["noise_label"]
             else:  # inject noise
                 noise_label = []
                 idx = list(range(50000))
