@@ -169,7 +169,7 @@ class cifar_dataset(Dataset):
                 # noise_label = json.load(open(noise_file, "r"))
                 nf = torch.load(noise_file)
                 train_label = nf["clean_label"]
-                noise_label = nf["noise_label"]
+                noise_label = nf["noisy_label"]
             else:  # inject noise
                 noise_label = []
                 idx = list(range(50000))
