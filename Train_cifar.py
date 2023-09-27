@@ -44,6 +44,7 @@ parser.add_argument("--num_class", default=10, type=int)
 parser.add_argument(
     "--data_path", default="./cifar-10", type=str, help="path to dataset"
 )
+parser.add_argument("--natural", type=str, help="path to natural noise")
 parser.add_argument("--dataset", default="cifar10", type=str)
 parser.add_argument("--resume", default=0, type=int)
 
@@ -72,6 +73,8 @@ torch.manual_seed(args.seed)
 torch.cuda.manual_seed_all(args.seed)
 
 device = "cuda:0"
+
+
 # Training
 def train(epoch, net, net2, optimizer, labeled_trainloader, unlabeled_trainloader):
     net.train()
@@ -244,7 +247,7 @@ def test(epoch, net1, net2):
             _, predicted = torch.max(outputs, 1)
             for c in set(predicted.cpu().numpy()):
                 per_class_accuracy[c] += sum(predicted[targets == c] == c)
-            for i, e in predicted:
+            for i, e in predicted.cpu().numpy():
                 pos = batch_idx * len(predicted)
                 total_predicted[pos + i] = e
                 total_GT[pos + i] = targets[i]
@@ -423,6 +426,11 @@ if args.dataset == "cifar10":
 elif args.dataset == "cifar100":
     warm_up = 30
 
+if args.natural:
+    noise_file = f"{args.natural}"
+else:
+    noise_file = "%s/%.1f_%s.json" % (args.data_path, args.r, args.noise_mode)
+
 loader = dataloader.cifar_dataloader(
     args.dataset,
     r=args.r,
@@ -431,7 +439,7 @@ loader = dataloader.cifar_dataloader(
     num_workers=5,
     root_dir=args.data_path,
     log=stats_log,
-    noise_file="%s/%.1f_%s.json" % (args.data_path, args.r, args.noise_mode),
+    noise_file=noise_file,
 )
 
 print("| Building net")
