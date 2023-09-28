@@ -245,11 +245,11 @@ def test(epoch, net1, net2):
             outputs2 = net2(inputs)
             outputs = outputs1 + outputs2
             _, predicted = torch.max(outputs, 1)
-            for c in set(predicted.cpu().numpy()):
+            toiter = predicted.cpu().numpy().tolist()
+            for c in toiter:
                 per_class_accuracy[c] += sum(predicted[targets == c] == c)
-            print(predicted)
-            for i, e in predicted.cpu().numpy():
-                pos = batch_idx * len(predicted)
+            for i, e in enumerate(toiter):
+                pos = batch_idx * len(toiter)
                 total_predicted[pos + i] = e
                 total_GT[pos + i] = targets[i]
             total += targets.size(0)
