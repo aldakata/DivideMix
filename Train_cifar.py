@@ -247,6 +247,7 @@ def test(epoch, net1, net2):
             _, predicted = torch.max(outputs, 1)
             for c in set(predicted.cpu().numpy()):
                 per_class_accuracy[c] += sum(predicted[targets == c] == c)
+            print(predicted)
             for i, e in predicted.cpu().numpy():
                 pos = batch_idx * len(predicted)
                 total_predicted[pos + i] = e
