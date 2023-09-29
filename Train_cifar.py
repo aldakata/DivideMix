@@ -256,14 +256,13 @@ def test(epoch, net1, net2):
             correct += predicted.eq(targets).cpu().sum().item()
     total_predicted = total_predicted.cpu().detach().numpy()
     total_GT = total_GT.cpu().detach().numpy()
-    cm = confusion_matrix(total_GT, total_predicted)
+    # cm = confusion_matrix(total_GT, total_predicted)
 
     acc = 100.0 * correct / total
     per_class_accuracy /= total / args.num_class
     std = per_class_accuracy.std()
     print("\n| Test Epoch #%d\t Accuracy: %.2f%%\t STD:%.2f%%\n" % (epoch, acc, std))
-    # test_log.write("Epoch:%d   Accuracy:%.2f\t STD:%.2f\n" % (epoch, acc, std))
-    test_log.write(f"{cm}")
+    test_log.write("Epoch:%d   Accuracy:%.2f\t STD:%.2f\n" % (epoch, acc, std))
     test_log.flush()
     return acc
 
