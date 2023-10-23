@@ -115,6 +115,7 @@ class cifar_dataset(Dataset):
         pred=[],
         probability=[],
         log="",
+        noise_type="aggre_label",
     ):
         self.r = r  # noise ratio
         self.transform = transform
@@ -168,8 +169,13 @@ class cifar_dataset(Dataset):
             if os.path.exists(noise_file):
                 # noise_label = json.load(open(noise_file, "r"))
                 nf = torch.load(noise_file)
-                train_label = nf["clean_label"]
-                noise_label = nf["noisy_label"]
+                if dataset == "cifar10":
+                    train_label = nf["clean_label"]
+                    noise_label = nf[noise_type]
+                    print(f"You selected CIFAR10N {noise_type}")
+                elif dataset == "cifar100":
+                    train_label = nf["clean_label"]
+                    noise_label = nf["noisy_label"]
             else:  # inject noise
                 noise_label = []
                 idx = list(range(50000))
@@ -273,6 +279,7 @@ class cifar_dataloader:
         root_dir,
         log,
         noise_file="",
+        noise_type="aggre_label",
     ):
         self.dataset = dataset
         self.r = r
@@ -282,6 +289,7 @@ class cifar_dataloader:
         self.root_dir = root_dir
         self.log = log
         self.noise_file = noise_file
+        self.noise_type = noise_type
         if self.dataset == "cifar10":
             self.transform_train = transforms.Compose(
                 [
@@ -327,6 +335,7 @@ class cifar_dataloader:
                 transform=self.transform_train,
                 mode="all",
                 noise_file=self.noise_file,
+                noise_type=self.noise_type,
             )
             trainloader = DataLoader(
                 dataset=all_dataset,
@@ -348,6 +357,7 @@ class cifar_dataloader:
                 pred=pred,
                 probability=prob,
                 log=self.log,
+                noise_type=self.noise_type,
             )
             labeled_trainloader = DataLoader(
                 dataset=labeled_dataset,
@@ -365,6 +375,7 @@ class cifar_dataloader:
                 mode="unlabeled",
                 noise_file=self.noise_file,
                 pred=pred,
+                noise_type=self.noise_type,
             )
             unlabeled_trainloader = DataLoader(
                 dataset=unlabeled_dataset,
@@ -400,6 +411,7 @@ class cifar_dataloader:
                 transform=self.transform_test,
                 mode="eval_train",
                 noise_file=self.noise_file,
+                noise_type=self.noise_type,
             )
             eval_loader = DataLoader(
                 dataset=eval_dataset,

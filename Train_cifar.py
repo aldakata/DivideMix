@@ -65,6 +65,8 @@ parser.set_defaults(skip_warmup=False)
 parser.add_argument("--confusion", default=False, dest="confusion", action="store_true")
 parser.set_defaults(confusion=False)
 
+parser.add_argument("--noise-type", dest="noise_type", default="aggre_label")
+
 args = parser.parse_args()
 
 torch.cuda.set_device(args.gpuid)
@@ -440,6 +442,7 @@ loader = dataloader.cifar_dataloader(
     root_dir=args.data_path,
     log=stats_log,
     noise_file=noise_file,
+    noise_type=args.noise_type,
 )
 
 print("| Building net")
