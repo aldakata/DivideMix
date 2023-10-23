@@ -1,7 +1,6 @@
 import numpy as np
 from sklearn.mixture import GaussianMixture
 import torch
-import matplotlib.pyplot as plt
 
 
 def ccgmm_codivide(loss: np.ndarray, targets: np.ndarray) -> np.ndarray:
