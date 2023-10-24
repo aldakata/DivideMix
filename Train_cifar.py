@@ -323,15 +323,11 @@ def eval_train(model, all_loss):
     gmm_GL_log = []
     for c in set(targets_all):
         mask = targets_clean_all == c
-        c_acc = (
-            100 * np.sum(pred_gmm[mask] == clean_labels[mask]) / len(pred_gmm[[mask]])
-        )
+        c_acc = 100 * np.sum(pred_gmm[mask] == clean_labels[mask]) / len(pred_gmm[mask])
         gmm_GT_log.append(c_acc)
 
         mask = targets_all == c
-        c_acc = (
-            100 * np.sum(pred_gmm[mask] == clean_labels[mask]) / len(pred_gmm[[mask]])
-        )
+        c_acc = 100 * np.sum(pred_gmm[mask] == clean_labels[mask]) / len(pred_gmm[mask])
         gmm_GL_log.append(c_acc)
 
     acc_gmm = 100 * np.sum(pred_gmm == clean_labels) / len(pred_gmm)
