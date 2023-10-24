@@ -67,6 +67,9 @@ parser.set_defaults(confusion=False)
 
 parser.add_argument("--noise-type", dest="noise_type", default="aggre_label")
 
+parser.add_argument("--workers", dest="noise_type", default=5)
+
+
 args = parser.parse_args()
 
 torch.cuda.set_device(args.gpuid)
@@ -438,7 +441,7 @@ loader = dataloader.cifar_dataloader(
     r=args.r,
     noise_mode=args.noise_mode,
     batch_size=args.batch_size,
-    num_workers=5,
+    num_workers=args.workers,
     root_dir=args.data_path,
     log=stats_log,
     noise_file=noise_file,
