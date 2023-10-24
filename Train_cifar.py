@@ -67,7 +67,7 @@ parser.set_defaults(confusion=False)
 
 parser.add_argument("--noise-type", dest="noise_type", default="aggre_label")
 
-parser.add_argument("--workers", dest="noise_type", default=5)
+parser.add_argument("--workers", dest="workers", default=5)
 
 
 args = parser.parse_args()
