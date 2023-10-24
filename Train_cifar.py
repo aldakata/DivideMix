@@ -91,10 +91,10 @@ def train(epoch, net, net2, optimizer, labeled_trainloader, unlabeled_trainloade
         labeled_trainloader
     ):
         try:
-            inputs_u, inputs_u2 = unlabeled_train_iter.next()
+            inputs_u, inputs_u2 = next(unlabeled_train_iter)
         except:
             unlabeled_train_iter = iter(unlabeled_trainloader)
-            inputs_u, inputs_u2 = unlabeled_train_iter.next()
+            inputs_u, inputs_u2 = next(unlabeled_train_iter)
         batch_size = inputs_x.size(0)
 
         # Transform label to one-hot
