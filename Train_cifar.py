@@ -342,11 +342,11 @@ def eval_train(model, all_loss):
     cc_GL_log = []
     for c in set(targets_all):
         mask = targets_clean_all == c
-        c_acc = 100 * np.sum(pred_cc[mask] == clean_labels[mask]) / len(pred_cc[[mask]])
+        c_acc = 100 * np.sum(pred_cc[mask] == clean_labels[mask]) / len(pred_cc[mask])
         cc_GT_log.append(c_acc)
 
         mask = targets_all == c
-        c_acc = 100 * np.sum(pred_cc[mask] == clean_labels[mask]) / len(pred_cc[[mask]])
+        c_acc = 100 * np.sum(pred_cc[mask] == clean_labels[mask]) / len(pred_cc[mask])
         cc_GL_log.append(c_acc)
 
     acc_cc = 100 * np.sum(pred_cc == clean_labels) / len(pred_cc)
