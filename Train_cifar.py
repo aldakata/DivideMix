@@ -531,9 +531,34 @@ for epoch in range(resume_epoch, args.num_epochs + 1):
         )  # train net2
 
     this_acc = test(epoch, net1, net2)
-    if not (epoch - warm_up) % 25:
-        save_net_optimizer_to_ckpt(net1, optimizer1, f"memory_log/{epoch}_1.pt")
-        save_net_optimizer_to_ckpt(net2, optimizer2, f"memory_log/{epoch}_2.pt")
+    if (not epoch % 25) or (epoch == warm_up):
+        checkpoint1 = {
+            "net": net1.state_dict(),
+            "Model_number": 1,
+            "Noise_Ratio": args.r,
+            "Loss Function": "CrossEntropyLoss",
+            "Optimizer": "SGD",
+            "Noise_mode": args.noise_mode,
+            "Accuracy": this_acc,
+            "Dataset": args.dataset,
+            "Batch Size": args.batch_size,
+            "epoch": epoch,
+        }
+        checkpoint2 = {
+            "net": net2.state_dict(),
+            "Model_number": 2,
+            "Noise_Ratio": args.r,
+            "Loss Function": "CrossEntropyLoss",
+            "Optimizer": "SGD",
+            "Noise_mode": args.noise_mode,
+            "Accuracy": this_acc,
+            "Dataset": args.dataset,
+            "Batch Size": args.batch_size,
+            "epoch": epoch,
+        }
+
+        torch.save(checkpoint1, f"memory_log/{epoch}_1.pt")
+        torch.save(checkpoint2, f"memory_log/{epoch}_2.pt")
 
     if this_acc > best_acc:
         best_acc = this_acc
