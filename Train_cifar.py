@@ -422,7 +422,7 @@ train_log = open(
     "w",
 )
 memory_log = "./checkpoint/{log_name}_memory"
-os.makedirs(memory_log)
+os.makedirs(memory_log, exist_ok=True)
 
 if args.dataset == "cifar10":
     warm_up = 10
