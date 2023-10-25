@@ -531,7 +531,7 @@ for epoch in range(resume_epoch, args.num_epochs + 1):
         )  # train net2
 
     this_acc = test(epoch, net1, net2)
-    if (not epoch % 25) or (epoch == warm_up):
+    if (not epoch % 25) or (epoch == warm_up) or epoch == 0:
         checkpoint1 = {
             "net": net1.state_dict(),
             "Model_number": 1,
