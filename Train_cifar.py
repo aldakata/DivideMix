@@ -421,6 +421,8 @@ train_log = open(
     f"./checkpoint/{log_name}_train_acc.txt",
     "w",
 )
+memory_log = "./checkpoint/{log_name}_memory"
+os.makedirs(memory_log)
 
 if args.dataset == "cifar10":
     warm_up = 10
@@ -529,6 +531,10 @@ for epoch in range(resume_epoch, args.num_epochs + 1):
         )  # train net2
 
     this_acc = test(epoch, net1, net2)
+    if not (epoch - warm_up) % 25:
+        save_net_optimizer_to_ckpt(net1, optimizer1, f"memory_log/{epoch}_1.pt")
+        save_net_optimizer_to_ckpt(net2, optimizer2, f"memory_log/{epoch}_2.pt")
+
     if this_acc > best_acc:
         best_acc = this_acc
         save_net_optimizer_to_ckpt(
