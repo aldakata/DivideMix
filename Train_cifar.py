@@ -557,8 +557,8 @@ for epoch in range(resume_epoch, args.num_epochs + 1):
             "epoch": epoch,
         }
 
-        torch.save(checkpoint1, f"memory_log/{epoch}_1.pt")
-        torch.save(checkpoint2, f"memory_log/{epoch}_2.pt")
+        torch.save(checkpoint1, f"{memory_log}/{epoch}_1.pt")
+        torch.save(checkpoint2, f"{memory_log}/{epoch}_2.pt")
 
     if this_acc > best_acc:
         best_acc = this_acc
