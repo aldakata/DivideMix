@@ -421,7 +421,7 @@ train_log = open(
     f"./checkpoint/{log_name}_train_acc.txt",
     "w",
 )
-memory_log = "./checkpoint/{log_name}_memory"
+memory_log = f"./checkpoint/{log_name}_memory"
 os.makedirs(memory_log, exist_ok=True)
 
 if args.dataset == "cifar10":
