@@ -409,16 +409,16 @@ if args.cc:
 log_name = f"{args.dataset}_{args.r}_{args.noise_mode}_{args.p_threshold}_{cc_sufix}"
 
 stats_log = open(
-    f"./checkpoint/{log_name}_stats.txt",
+    f"./checkpoint/{log_name}_stats_resume.txt",
     "w",
 )
 test_log = open(
-    f"./checkpoint/{log_name}_acc.txt",
+    f"./checkpoint/{log_name}_acc_resume.txt",
     "w",
 )
 
 train_log = open(
-    f"./checkpoint/{log_name}_train_acc.txt",
+    f"./checkpoint/{log_name}_train_acc_resume.txt",
     "w",
 )
 memory_log = f"./checkpoint/{log_name}_memory"
@@ -469,22 +469,14 @@ if args.confusion:
     this_acc = test(0, net1, net2)
 
 
-if args.resume == 0:
-    optimizer1 = optim.SGD(
-        net1.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4
-    )
-    optimizer2 = optim.SGD(
-        net2.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4
-    )
-else:
-    print("Loading net")
-    resume_epoch = 30
-    net1, optimizer1 = load_net_optimizer_from_ckpt_to_device(
-        net1, args, f"./checkpoint/{args.r}_warmed_up_1.pt", device
-    )
-    net2, optimizer2 = load_net_optimizer_from_ckpt_to_device(
-        net2, args, f"./checkpoint/{args.r}_warmed_up_2.pt", device
-    )
+print("Loading net")
+resume_epoch = 276
+net1, optimizer1 = load_net_optimizer_from_ckpt_to_device(
+    net1, args, f"./checkpoint/cifar100_0.9_sym_0.5_cc_memory/275_1.pt", device
+)
+net2, optimizer2 = load_net_optimizer_from_ckpt_to_device(
+    net2, args, f"./checkpoint/cifar100_0.9_sym_0.5_cc_memory/275_2.pt", device
+)
 
 
 all_loss = [[], []]  # save the history of losses from two networks
