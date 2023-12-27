@@ -52,7 +52,8 @@ class cifar_dataset(Dataset):
                 train_label = train_dic['fine_labels']
             train_data = train_data.reshape((50000, 3, 32, 32))
             train_data = train_data.transpose((0, 2, 3, 1))
-
+            print('labels', train_label)
+            print('dataset', dataset)
             if os.path.exists(noise_file):
                 noise_label = json.load(open(noise_file,"r"))
             else:    #inject noise   
