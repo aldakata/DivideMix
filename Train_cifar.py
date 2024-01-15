@@ -282,7 +282,7 @@ def test(epoch,net1,net2):
     print("\n| Test Epoch #%d\t Accuracy: %.2f%%\n" %(epoch,acc))  
     test_log.write('Epoch:%d   Accuracy:%.2f\n'%(epoch,acc))
     test_log.flush() 
-
+    return acc
 
 def eval_train(model, all_loss):
     model.eval()
