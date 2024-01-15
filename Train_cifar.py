@@ -227,41 +227,61 @@ def warmup(epoch, net, optimizer, dataloader):
         sys.stdout.flush()
 
 
-def test(epoch, net1, net2):
+# def test(epoch, net1, net2):
+#     net1.eval()
+#     net2.eval()
+#     correct = 0
+#     total = 0
+#     per_class_accuracy = np.zeros(args.num_class)
+#     total_predicted = torch.zeros(10000, device=device)
+#     total_GT = torch.zeros(10000, device=device)
+#     with torch.no_grad():
+#         for batch_idx, (inputs, targets) in enumerate(test_loader):
+#             inputs, targets = inputs.cuda(), targets.cuda()
+#             outputs1 = net1(inputs)
+#             outputs2 = net2(inputs)
+#             outputs = outputs1 + outputs2
+#             _, predicted = torch.max(outputs, 1)
+#             for c in set(predicted.cpu().numpy()):
+#                 per_class_accuracy[c] += sum(predicted[targets == c] == c)
+#             for i, e in predicted:
+#                 pos = batch_idx * len(predicted)
+#                 total_predicted[pos + i] = e
+#                 total_GT[pos + i] = targets[i]
+#             total += targets.size(0)
+#             correct += predicted.eq(targets).cpu().sum().item()
+#     total_predicted = total_predicted.cpu().detach().numpy()
+#     total_GT = total_GT.cpu().detach().numpy()
+#     cm = confusion_matrix(total_GT, total_predicted)
+
+#     acc = 100.0 * correct / total
+#     per_class_accuracy /= total / args.num_class
+#     std = per_class_accuracy.std()
+#     print("\n| Test Epoch #%d\t Accuracy: %.2f%%\t STD:%.2f%%\n" % (epoch, acc, std))
+#     # test_log.write("Epoch:%d   Accuracy:%.2f\t STD:%.2f\n" % (epoch, acc, std))
+#     test_log.write(f"{cm}")
+#     test_log.flush()
+#     return acc
+
+def test(epoch,net1,net2):
     net1.eval()
     net2.eval()
     correct = 0
     total = 0
-    per_class_accuracy = np.zeros(args.num_class)
-    total_predicted = torch.zeros(10000, device=device)
-    total_GT = torch.zeros(10000, device=device)
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(test_loader):
             inputs, targets = inputs.cuda(), targets.cuda()
             outputs1 = net1(inputs)
-            outputs2 = net2(inputs)
-            outputs = outputs1 + outputs2
-            _, predicted = torch.max(outputs, 1)
-            for c in set(predicted.cpu().numpy()):
-                per_class_accuracy[c] += sum(predicted[targets == c] == c)
-            for i, e in predicted:
-                pos = batch_idx * len(predicted)
-                total_predicted[pos + i] = e
-                total_GT[pos + i] = targets[i]
+            outputs2 = net2(inputs)           
+            outputs = outputs1+outputs2
+            _, predicted = torch.max(outputs, 1)            
+                       
             total += targets.size(0)
-            correct += predicted.eq(targets).cpu().sum().item()
-    total_predicted = total_predicted.cpu().detach().numpy()
-    total_GT = total_GT.cpu().detach().numpy()
-    cm = confusion_matrix(total_GT, total_predicted)
-
-    acc = 100.0 * correct / total
-    per_class_accuracy /= total / args.num_class
-    std = per_class_accuracy.std()
-    print("\n| Test Epoch #%d\t Accuracy: %.2f%%\t STD:%.2f%%\n" % (epoch, acc, std))
-    # test_log.write("Epoch:%d   Accuracy:%.2f\t STD:%.2f\n" % (epoch, acc, std))
-    test_log.write(f"{cm}")
-    test_log.flush()
-    return acc
+            correct += predicted.eq(targets).cpu().sum().item()                 
+    acc = 100.*correct/total
+    print("\n| Test Epoch #%d\t Accuracy: %.2f%%\n" %(epoch,acc))  
+    test_log.write('Epoch:%d   Accuracy:%.2f\n'%(epoch,acc))
+    test_log.flush() 
 
 
 def eval_train(model, all_loss):
